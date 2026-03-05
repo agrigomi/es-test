@@ -19,15 +19,15 @@ LIBIPC_SRC = $(SRC_DIR)/libipc.c
 LIBIPC_DEP = $(COMMON_DEPS)
 LIBIPC_OBJS = $(BUILD_DIR)/libipc.o
 
-SERVER_SRC = $(SRC_DIR)/server.c $(SRC_DIR)/argv.c
+SERVER_SRC = $(SRC_DIR)/server.c $(SRC_DIR)/argv.c $(SRC_DIR)/trace.c
 SERVER_OBJS = $(BUILD_DIR)/server.o
 SERVER_DEP = $(COMMON_DEPS) $(SRC_DIR)/argv.h $(SRC_DIR)/dtype.h
 
-CLIENT1_SRC = $(SRC_DIR)/client1.c $(SRC_DIR)/argv.c
+CLIENT1_SRC = $(SRC_DIR)/client1.c $(SRC_DIR)/argv.c $(SRC_DIR)/trace.c
 CLIENT1_OBJS = $(BUILD_DIR)/client1.o
 CLIENT1_DEP = $(COMMON_DEPS) $(SRC_DIR)/argv.h $(SRC_DIR)/dtype.h
 
-CLIENT2_SRC = $(SRC_DIR)/client2.c $(SRC_DIR)/argv.c
+CLIENT2_SRC = $(SRC_DIR)/client2.c $(SRC_DIR)/argv.c $(SRC_DIR)/trace.c
 CLIENT2_OBJS = $(BUILD_DIR)/client2.o
 CLIENT2_DEP = $(COMMON_DEPS) $(SRC_DIR)/argv.h $(SRC_DIR)/dtype.h
 

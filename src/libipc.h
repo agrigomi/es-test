@@ -14,6 +14,10 @@
 #define IPC_MODE_INET		2
 #define IPC_MODE_UNIX		3
 
+/* Error defs */
+#define E_OK		0
+#define E_FAIL		-1
+
 /* IPC context */
 typedef struct {
 	int	mode;	/* IPC mode */
