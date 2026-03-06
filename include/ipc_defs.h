@@ -14,6 +14,4 @@
 #define _TRACE_			1
 #define _DEBUG_			1
 
-typedef struct _ipc_cxt_t	_ipc_t;
-
 #endif

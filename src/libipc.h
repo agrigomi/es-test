@@ -28,33 +28,36 @@ typedef struct {
 	unsigned int	size; 		/* data size */
 	unsigned char	io_buffer[MAX_IO_BUFFER];
 #endif
-} _ipc_cxt_t;
+} _ipc_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #if USE_SOCKETS
-int ipc_get_fd(_ipc_cxt_t *cxt);
+int ipc_get_fd(_ipc_t *cxt);
 #endif
 
 /* Server side.
  * Create IPC context */
 
-_ipc_cxt_t *ipc_server(const char *ifc, int mode);
+_ipc_t *ipc_server(const char *ifc, int mode);
 /* Server side listen for client connections.
  * Returns connection IPC context */
-_ipc_cxt_t *ipc_listen(_ipc_cxt_t *server_cxt);
+_ipc_t *ipc_listen(_ipc_t *server_cxt);
 
 /* Client side.
  * Returns connection IPC context */
-_ipc_cxt_t *ipc_client(const char *dst, int mode);
+_ipc_t *ipc_client(const char *dst, int mode);
 
 /* Client side.
    Connect to server. */
-int ipc_connect(_ipc_cxt_t *cxt);
+int ipc_connect(_ipc_t *client_cxt);
 
-void ipc_close(_ipc_cxt_t *cxt);
+int ipc_write(_ipc_t *cxt, void *data, int size);
+int ipc_read(_ipc_t *cxt, void *buffer, int size);
+
+void ipc_close(_ipc_t *cxt);
 #ifdef __cplusplus
 }
 #endif
