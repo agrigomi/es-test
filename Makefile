@@ -13,10 +13,10 @@ TARGET_SERVER = $(BUILD)/server
 TARGET_CLIENT1 = $(BUILD)/client1
 TARGET_CLIENT2 = $(BUILD)/client2
 
-COMMON_DEPS = $(SRC)/libipc.h $(INCLUDE)/ipc_defs.h
+COMMON_DEPS = $(SRC)/libipc.h
 
 LIBIPC_SRC = $(SRC)/libipc.c
-LIBIPC_DEP = $(COMMON_DEPS)
+LIBIPC_DEP = $(COMMON_DEPS) $(INCLUDE)/ipc_defs.h
 LIBIPC_OBJS = $(BUILD)/libipc.o
 
 SERVER_SRC = $(SRC)/server.c $(SRC)/argv.c $(SRC)/trace.c

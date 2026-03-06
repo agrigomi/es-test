@@ -7,10 +7,6 @@
 #define USE_SOCKETS		0
 #define USE_UNIX_SOCKETS	0
 
-#if USE_SHARED_MEMORY
-#define MAX_IO_BUFFER		1024
-#endif
-
 #define _TRACE_			1
 #define _DEBUG_			1
 

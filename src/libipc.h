@@ -1,13 +1,11 @@
 #ifndef __LIBIPC_H__
 #define __LIBIPC_H__
 
-#include "ipc_defs.h"
 
-#if USE_SHARED_MEMORY
 #include <semaphore.h>
 
-#define MAX_SHM_NAME	16
-#endif
+#define MAX_SHM_NAME		16
+#define MAX_IO_BUFFER		1024
 
 
 #define IPC_MODE_SHM		1	/* Shared memory mode */
@@ -21,22 +19,17 @@
 /* IPC context */
 typedef struct {
 	int		mode;		/* IPC mode */
-#if USE_SHARED_MEMORY
 	sem_t		s_data;		/* request semaphore */
 	sem_t		s_result;	/* result semaphore */
 	char		shm_name[MAX_SHM_NAME]; /* shared memory name */
 	unsigned int	size; 		/* data size */
 	unsigned char	io_buffer[MAX_IO_BUFFER];
-#endif
 } _ipc_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if USE_SOCKETS
-int ipc_get_fd(_ipc_t *cxt);
-#endif
 
 /* Server side.
  * Create IPC context */
@@ -57,9 +50,7 @@ int ipc_write(_ipc_t *cxt, void *data, int size);
 int ipc_read(_ipc_t *cxt, void *buffer, int size);
 
 void ipc_close(_ipc_t *cxt, int *pfd);
-#if USE_SHARED_MEMORY
 void ipc_unmap_shm(_ipc_t *cxt, int *pfd);
-#endif
 
 #ifdef __cplusplus
 }

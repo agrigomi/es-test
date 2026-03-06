@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "ipc_defs.h"
 #include "libipc.h"
 #include "trace.h"
 
