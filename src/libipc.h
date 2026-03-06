@@ -57,6 +57,8 @@ int ipc_write(_ipc_t *cxt, void *data, int size);
 int ipc_read(_ipc_t *cxt, void *buffer, int size);
 
 void ipc_close(_ipc_t *cxt);
+void ipc_unmap(_ipc_t *cxt);
+
 #ifdef __cplusplus
 }
 #endif

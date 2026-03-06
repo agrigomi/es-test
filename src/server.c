@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
 				_ipc_t *s_ipc = ipc_server(ifc, IPC_MODE_SHM);
 
 				if (s_ipc) {
-					while(1) {
+					//while(1) {
 						_ipc_t *c_ipc = ipc_listen(s_ipc);
 						TRACE("server: incomming connection from '%s'\n", c_ipc->shm_name);
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 						int n = ipc_read(c_ipc, buf, sizeof(buf));
 						TRACE("server: received %d bytes\n", n);
 						printf("%s\n", buf);
-					}
+					//}
 				}
 
 				ipc_close(s_ipc);
