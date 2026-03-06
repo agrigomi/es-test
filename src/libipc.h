@@ -58,7 +58,7 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size);
 
 void ipc_close(_ipc_t *cxt, int *pfd);
 #if USE_SHARED_MEMORY
-void ipc_unmap(_ipc_t *cxt, int *pfd);
+void ipc_unmap_shm(_ipc_t *cxt, int *pfd);
 #endif
 
 #ifdef __cplusplus

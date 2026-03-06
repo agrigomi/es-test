@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
 						TRACE("server: received %d bytes\n", n);
 						printf("%s\n", buf);
 					//}
-					ipc_unmap(c_ipc, &cfd);
+					ipc_unmap_shm(c_ipc, &cfd);
 				}
 
 				ipc_close(s_ipc, &fd);
