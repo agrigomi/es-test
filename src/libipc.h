@@ -40,14 +40,14 @@ int ipc_get_fd(_ipc_t *cxt);
 
 /* Server side.
  * Create IPC context */
-_ipc_t *ipc_server(const char *ifc, int mode);
+_ipc_t *ipc_server(const char *ifc, int mode, int *pfd);
 /* Server side listen for client connections.
  * Returns connection IPC context */
-_ipc_t *ipc_listen(_ipc_t *server_cxt);
+_ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd);
 
 /* Client side.
  * Returns connection IPC context */
-_ipc_t *ipc_client(const char *dst, int mode);
+_ipc_t *ipc_client(const char *dst, int mode, int *pfd);
 
 /* Client side.
    Connect to server. */
@@ -56,8 +56,10 @@ int ipc_connect(_ipc_t *client_cxt);
 int ipc_write(_ipc_t *cxt, void *data, int size);
 int ipc_read(_ipc_t *cxt, void *buffer, int size);
 
-void ipc_close(_ipc_t *cxt);
-void ipc_unmap(_ipc_t *cxt);
+void ipc_close(_ipc_t *cxt, int *pfd);
+#if USE_SHARED_MEMORY
+void ipc_unmap(_ipc_t *cxt, int *pfd);
+#endif
 
 #ifdef __cplusplus
 }

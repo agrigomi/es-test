@@ -56,13 +56,14 @@ int main(int argc, char *argv[]) {
 			const char *dst = opt_dst();
 
 			if (dst) {
-				_ipc_t *c_ipc = ipc_client(dst, IPC_MODE_SHM);
+				int fd = -1;
+				_ipc_t *c_ipc = ipc_client(dst, IPC_MODE_SHM, &fd);
 
 				if (c_ipc)
 					ipc_connect(c_ipc);
 
 				ipc_write(c_ipc, "alabala", 7);
-				ipc_close(c_ipc);
+				ipc_close(c_ipc, &fd);
 			}
 		}
 	} else

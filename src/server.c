@@ -56,11 +56,13 @@ int main(int argc, char *argv[]) {
 			usage();
 		else {
 			if ((ifc = opt_ifc())) {
-				_ipc_t *s_ipc = ipc_server(ifc, IPC_MODE_SHM);
+				int fd = -1;
+				_ipc_t *s_ipc = ipc_server(ifc, IPC_MODE_SHM, &fd);
 
 				if (s_ipc) {
 					//while(1) {
-						_ipc_t *c_ipc = ipc_listen(s_ipc);
+						int cfd = -1;
+						_ipc_t *c_ipc = ipc_listen(s_ipc, &cfd);
 						TRACE("server: incomming connection from '%s'\n", c_ipc->shm_name);
 
 						char buf[256];
@@ -68,9 +70,10 @@ int main(int argc, char *argv[]) {
 						TRACE("server: received %d bytes\n", n);
 						printf("%s\n", buf);
 					//}
+					ipc_unmap(c_ipc, &cfd);
 				}
 
-				ipc_close(s_ipc);
+				ipc_close(s_ipc, &fd);
 			} else
 				usage();
 		}

@@ -8,11 +8,14 @@
 #include "trace.h"
 
 #if USE_SHARED_MEMORY
-_ipc_t *open_shared_memory(const char *ifc) {
+_ipc_t *open_shared_memory(const char *ifc, int *pfd) {
 	_ipc_t *r = NULL;
 	int fd = shm_open(ifc, O_CREAT | O_EXCL | O_RDWR, 0600);
 
 	if (fd > 0) {
+		if (pfd) /* backup file descriptor */
+			*pfd = fd;
+
 		if (ftruncate(fd, sizeof(_ipc_t)) != -1) {
 			if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE,
 						MAP_SHARED, fd, 0))) {
@@ -41,14 +44,14 @@ _ipc_t *open_shared_memory(const char *ifc) {
 }
 #endif
 
-_ipc_t *ipc_server(const char *ifc, int mode) {
+_ipc_t *ipc_server(const char *ifc, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 
 	switch (mode) {
 #if USE_SHARED_MEMORY
 		case IPC_MODE_SHM:
 			/* Open server side shared area for connect only */
-			r = open_shared_memory(ifc);
+			r = open_shared_memory(ifc, pfd);
 			break;
 #endif
 		case IPC_MODE_INET:
@@ -60,7 +63,7 @@ _ipc_t *ipc_server(const char *ifc, int mode) {
 	return r;
 }
 
-_ipc_t *ipc_client(const char *dst, int mode) {
+_ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 	char ifc[MAX_SHM_NAME];
 	int sz = 0;
@@ -73,7 +76,7 @@ _ipc_t *ipc_client(const char *dst, int mode) {
 			/* Create uniqie name for client shared memory */
 			sz = snprintf(ifc, sizeof(ifc), "SMC%d", getpid());
 			/* Open client side shared area for data transfer */
-			if ((r = open_shared_memory(ifc))) {
+			if ((r = open_shared_memory(ifc, pfd))) {
 				/* Set destination (server SHM) in own IO buffer */
 				strncpy((char *)r->io_buffer, dst, sizeof(r->io_buffer) - 1);
 				r->size = sz;
@@ -89,15 +92,24 @@ _ipc_t *ipc_client(const char *dst, int mode) {
 	return r;
 }
 
-void ipc_close(_ipc_t *cxt) {
-	shm_unlink(cxt->shm_name);
+void ipc_close(_ipc_t *cxt, int *pfd) {
+	if (cxt->mode == IPC_MODE_SHM)
+#if USE_SHARED_MEMORY
+		shm_unlink(cxt->shm_name);
+#endif
+	if (pfd)
+		close(*pfd);
 }
 
-void ipc_unmap(_ipc_t *cxt) {
+#if USE_SHARED_MEMORY
+void ipc_unmap(_ipc_t *cxt, int *pfd) {
 	munmap(cxt, sizeof(_ipc_t));
+	if (pfd)
+		close(*pfd);
 }
+#endif
 
-_ipc_t *ipc_listen(_ipc_t *server_cxt) {
+_ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 	_ipc_t *r = NULL;
 
 	if (server_cxt->mode == IPC_MODE_SHM) {
@@ -107,6 +119,9 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt) {
 			int fd = shm_open((char *)server_cxt->io_buffer, O_RDWR, 0);
 
 			if (fd > 0) {
+				if (pfd) /* backup file descriptor */
+					*pfd = fd;
+
 				if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)))
 					sem_post(&(server_cxt->s_result));
 				else {
