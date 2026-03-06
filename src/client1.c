@@ -8,7 +8,6 @@
 #define OPT_SHELP	"h"
 #define OPT_SVERSION	"v"
 #define OPT_DST		"dst"
-#define OPT_SDST	"d"
 
 #define VERSION	"1.0.0"
 
@@ -16,7 +15,6 @@ static _argv_t args[] = {
 	{ OPT_SHELP,	0,				NULL,		"Print this help" },
 	{ OPT_HELP,	OF_LONG,			NULL,		"Print this help" },
 	{ OPT_SVERSION,	0,				NULL,		"Print version" },
-	{ OPT_SDST,	OF_VALUE,			NULL,		"Destination address (shared memory name or IP)" },
 	{ OPT_DST,	OF_LONG|OF_VALUE,		NULL,		"Destination address (shared memory name or IP)" },
 	//...
 	{ NULL,		0,				NULL,		NULL }
@@ -42,8 +40,6 @@ static const char *opt_dst(void) {
 
 	if (argv_check(OPT_DST))
 		r = argv_value(OPT_DST);
-	else if (argv_check(OPT_SDST))
-		r = argv_value(OPT_SDST);
 
 	return r;
 }

@@ -40,7 +40,6 @@ int ipc_get_fd(_ipc_t *cxt);
 
 /* Server side.
  * Create IPC context */
-
 _ipc_t *ipc_server(const char *ifc, int mode);
 /* Server side listen for client connections.
  * Returns connection IPC context */

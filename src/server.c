@@ -8,7 +8,6 @@
 #define OPT_SVERSION	"v"
 #define OPT_STHREADS	"t"
 #define OPT_IFC		"ifc"
-#define OPT_SIFC	"i"
 
 #define VERSION		"1.0.0"
 
@@ -17,7 +16,6 @@ static _argv_t args[] = {
 	{ OPT_HELP,	OF_LONG,			NULL,		"Print this help" },
 	{ OPT_SVERSION,	0,				NULL,		"Print version" },
 	{ OPT_STHREADS,	0,				NULL,		"Use threads (process based by default)" },
-	{ OPT_SIFC,	OF_VALUE,			NULL,		"Interface name (shared memory name or lan interface)" },
 	{ OPT_IFC,	OF_LONG|OF_VALUE,		NULL,		"Interface name (shared memory name or lan interface)" },
 	//...
 	{ NULL,		0,				NULL,		NULL }
@@ -43,8 +41,6 @@ static const char *opt_ifc(void) {
 
 	if (argv_check(OPT_IFC))
 		r = argv_value(OPT_IFC);
-	else if (argv_check(OPT_SIFC))
-		r = argv_value(OPT_SIFC);
 
 	return r;
 }
@@ -63,13 +59,15 @@ int main(int argc, char *argv[]) {
 				_ipc_t *s_ipc = ipc_server(ifc, IPC_MODE_SHM);
 
 				if (s_ipc) {
-					_ipc_t *c_ipc = ipc_listen(s_ipc);
-					TRACE("server: incomming connection from '%s'\n", c_ipc->shm_name);
+					while(1) {
+						_ipc_t *c_ipc = ipc_listen(s_ipc);
+						TRACE("server: incomming connection from '%s'\n", c_ipc->shm_name);
 
-					char buf[256];
-
-					int n = ipc_read(c_ipc, buf, sizeof(buf));
-					printf(buf);
+						char buf[256];
+						int n = ipc_read(c_ipc, buf, sizeof(buf));
+						TRACE("server: received %d bytes\n", n);
+						printf("%s\n", buf);
+					}
 				}
 
 				ipc_close(s_ipc);

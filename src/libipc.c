@@ -146,6 +146,7 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 		n = sizeof(cxt->io_buffer);
 
 	memcpy(cxt->io_buffer, data, n);
+	cxt->size = n;
 	if (sem_post(&(cxt->s_data)) == 0)
 		r = n;
 
@@ -162,6 +163,8 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 
 		memcpy(buffer, cxt->io_buffer, n);
 		r = n;
+	} else {
+		TRACE("libipc: Failed to read\n");
 	}
 
 	return r;
