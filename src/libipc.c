@@ -158,9 +158,10 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 
 	if (sem_wait(&(cxt->s_data)) == 0) {
 		if (n > cxt->size)
-			r = n = cxt->size;
+			n = cxt->size;
 
 		memcpy(buffer, cxt->io_buffer, n);
+		r = n;
 	}
 
 	return r;
