@@ -48,12 +48,12 @@ _ipc_t *ipc_server(const char *ifc, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 
 	switch (mode) {
-#if USE_SHARED_MEMORY
 		case IPC_MODE_SHM:
+#if USE_SHARED_MEMORY
 			/* Open server side shared area for connect only */
 			r = open_shared_memory(ifc, pfd);
-			break;
 #endif
+			break;
 		case IPC_MODE_INET:
 			break;
 		case IPC_MODE_UNIX:
@@ -71,8 +71,8 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	memset(ifc, 0, sizeof(ifc));
 
 	switch (mode) {
-#if USE_SHARED_MEMORY
 		case IPC_MODE_SHM:
+#if USE_SHARED_MEMORY
 			/* Create uniqie name for client shared memory */
 			sz = snprintf(ifc, sizeof(ifc), "SMC%d", getpid());
 			/* Open client side shared area for data transfer */
@@ -81,8 +81,8 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 				strncpy((char *)r->io_buffer, dst, sizeof(r->io_buffer) - 1);
 				r->size = sz;
 			}
-			break;
 #endif
+			break;
 		case IPC_MODE_INET:
 			break;
 		case IPC_MODE_UNIX:
@@ -132,6 +132,14 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 			}
 		}
 #endif
+	} else if (server_cxt->mode == IPC_MODE_INET) {
+#if USE_SOCKETS
+		/* ToDo INET */
+#endif
+	} else if (server_cxt->mode == IPC_MODE_UNIX) {
+#if USE_UNIX_SOCKETS
+		/* ToDo UNIX sockets */
+#endif
 	}
 
 
@@ -168,7 +176,16 @@ int ipc_connect(_ipc_t *client_cxt) {
 			TRACE("libipc: Failed to open server's shared area '%s'\n", client_cxt->io_buffer);
 		}
 #endif
+	} else if (client_cxt->mode == IPC_MODE_INET) {
+#if USE_SOCKETS
+		/* ToDo INET */
+#endif
+	} else if (client_cxt->mode == IPC_MODE_UNIX) {
+#if USE_UNIX_SOCKETS
+		/* ToDo UNIX sockets */
+#endif
 	}
+
 
 	return r;
 }
