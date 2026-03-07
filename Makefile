@@ -5,7 +5,7 @@ INCLUDE = include
 CC = gcc
 LD = ld
 
-CC_FLAGS = -Wall -Wextra -g -O3 -I./$(INCLUDE)/
+CC_FLAGS = -Wall -Wextra -g -O0 -I./$(INCLUDE)/
 LD_FLAGS = -g -fPIC -shared
 
 TARGET_LIBIPC = $(BUILD)/libipc.so
@@ -13,7 +13,7 @@ TARGET_SERVER = $(BUILD)/server
 TARGET_CLIENT1 = $(BUILD)/client1
 TARGET_CLIENT2 = $(BUILD)/client2
 
-COMMON_DEPS = $(SRC)/libipc.h
+COMMON_DEPS = $(SRC)/libipc.h $(SRC)/trace.h
 
 LIBIPC_SRC = $(SRC)/libipc.c
 LIBIPC_DEP = $(COMMON_DEPS) $(INCLUDE)/ipc_defs.h

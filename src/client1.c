@@ -1,5 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <string.h>
 #include "libipc.h"
 #include "argv.h"
 #include "trace.h"
@@ -10,6 +14,9 @@
 #define OPT_DST		"dst"
 
 #define VERSION	"1.0.0"
+
+static _ipc_t	*_g_ipc_ = NULL;
+static int	_g_shm_fd_ = -1;
 
 static _argv_t args[] = {
 	{ OPT_SHELP,	0,				NULL,		"Print this help" },
@@ -44,8 +51,35 @@ static const char *opt_dst(void) {
 	return r;
 }
 
+static void close_ipc(void) {
+	if (_g_ipc_) {
+		ipc_close(_g_ipc_, &_g_shm_fd_);
+		_g_ipc_ = NULL;
+	}
+}
+
+void sig_handler(int sig) {
+	switch (sig) {
+		case SIGINT:
+		case SIGTERM:
+		case SIGKILL:
+			close_ipc();
+			fflush(stderr);
+			exit(0);
+	}
+}
+
 int main(int argc, char *argv[]) {
 	int r = 0;
+
+	int signals [] = { SIGINT, SIGTERM, SIGKILL, 0 };
+	int n = 0;
+
+	/* signal handling */
+	while (signals[n]) {
+		signal(signals[n], sig_handler);
+		n++;
+	}
 
 	if (argv_parse(argc, (_cstr_t *)argv, args)) {
 		if (argv_check(OPT_SVERSION))
@@ -56,19 +90,32 @@ int main(int argc, char *argv[]) {
 			const char *dst = opt_dst();
 
 			if (dst) {
-				int fd = -1;
-				_ipc_t *c_ipc = ipc_client(dst, IPC_MODE_SHM, &fd);
+				_g_ipc_ = ipc_client(dst, IPC_MODE_SHM, &_g_shm_fd_);
 
-				if (c_ipc)
-					ipc_connect(c_ipc);
+				if (_g_ipc_) {
+					if (ipc_connect(_g_ipc_) == E_IPC_OK) {
 
-				ipc_write(c_ipc, "alabala", 7);
-				ipc_close(c_ipc, &fd);
+						char inb[MAX_IO_BUFFER] = "";
+
+						while (fgets(inb, sizeof(inb), stdin)) {
+							if (strncasecmp(inb, "exit", 4) == 0 ||
+									strncasecmp(inb, "quit", 4) == 0)
+								break;
+							ipc_write(_g_ipc_, inb, strlen(inb));
+							ipc_read(_g_ipc_, inb, sizeof(inb));
+							printf("%s", inb);
+							memset(inb, 0, sizeof(inb));
+						}
+					}
+
+					close_ipc();
+				}
 			}
 		}
 	} else
 		usage();
 
+	fflush(stderr);
 
 	return r;
 }

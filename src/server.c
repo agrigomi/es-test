@@ -1,4 +1,8 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <stdlib.h>
 #include "libipc.h"
 #include "argv.h"
 #include "trace.h"
@@ -10,6 +14,12 @@
 #define OPT_IFC		"ifc"
 
 #define VERSION		"1.0.0"
+
+static _ipc_t		*_g_server_shm_ = NULL;
+static int		_g_fd_shm_ = -1;
+static const char	*_g_ifc_ = NULL;
+static int		_g_running_ = 0;
+static int		_g_fork_ = 0;
 
 static _argv_t args[] = {
 	{ OPT_SHELP,	0,				NULL,		"Print this help" },
@@ -45,9 +55,76 @@ static const char *opt_ifc(void) {
 	return r;
 }
 
+static void close_ipc(void) {
+	if (_g_server_shm_) {
+		ipc_close(_g_server_shm_, &_g_fd_shm_);
+		_g_server_shm_ = NULL;
+	}
+}
+
+static int do_fork(_ipc_t *ipc_cxt, int fd) {
+	int r = 0;
+	int pid = fork();
+
+	if (pid == 0) {
+		/* child process */
+		char buf[256];
+		int n = 0;
+
+		_g_fork_ = 1;
+		ipc_unmap_shm(_g_server_shm_, &_g_fd_shm_);
+		_g_server_shm_ = NULL;
+
+		while ((n = ipc_read(ipc_cxt, buf, sizeof(buf))) > 0) {
+			printf("%s\n", buf);
+			char resp[256];
+			int szr = snprintf(resp, sizeof(resp), "response: %s\n", buf);
+			ipc_write(ipc_cxt, resp, szr);
+		}
+
+		TRACE("fork %d exit\b", getpid());
+		ipc_unmap_shm(ipc_cxt, &fd);
+		exit(0);
+	} else {
+		/* parent process */
+		ipc_unmap_shm(ipc_cxt, &fd);
+	}
+
+	return r;
+}
+
+void sig_handler(int sig) {
+	switch (sig) {
+		case SIGINT:
+		case SIGTERM:
+		case SIGKILL:
+			_g_running_ = 0;
+			close_ipc();
+			break;
+		case SIGCHLD: {
+				int stat;
+				pid_t	pid;
+
+				while (1) {
+					if ((pid = wait3 (&stat, WNOHANG, (struct rusage *)NULL )) <= 0)
+						break;
+					TRACE("SIGCHLD: PID=%u, STATUS=%d\n", getpid(), pid, stat);
+				}
+			} break;
+
+	}
+}
+
 int main(int argc, char *argv[]) {
 	int r = 0;
-	const char *ifc = NULL;
+	int signals [] = { SIGINT, SIGTERM, SIGKILL, SIGCHLD, 0 };
+	int n = 0;
+
+	/* signal handling */
+	while (signals[n]) {
+		signal(signals[n], sig_handler);
+		n++;
+	}
 
 	if (argv_parse(argc, (_cstr_t *)argv, args)) {
 		if (argv_check(OPT_SVERSION))
@@ -55,25 +132,27 @@ int main(int argc, char *argv[]) {
 		else if (argv_check(OPT_SHELP) || argv_check(OPT_HELP))
 			usage();
 		else {
-			if ((ifc = opt_ifc())) {
-				int fd = -1;
-				_ipc_t *s_ipc = ipc_server(ifc, IPC_MODE_SHM, &fd);
+			if ((_g_ifc_ = opt_ifc())) {
+				_g_server_shm_ = ipc_server(_g_ifc_, IPC_MODE_SHM, &_g_fd_shm_);
 
-				if (s_ipc) {
-					//while(1) {
+				if (_g_server_shm_) {
+					_g_running_ = 1;
+
+					while (_g_running_) {
 						int cfd = -1;
-						_ipc_t *c_ipc = ipc_listen(s_ipc, &cfd);
-						TRACE("server: incomming connection from '%s'\n", c_ipc->shm_name);
+						_ipc_t *c_ipc = ipc_listen(_g_server_shm_, &cfd);
+						r = do_fork(c_ipc, cfd);
 
-						char buf[256];
-						int n = ipc_read(c_ipc, buf, sizeof(buf));
-						TRACE("server: received %d bytes\n", n);
-						printf("%s\n", buf);
-					//}
-					ipc_unmap_shm(c_ipc, &cfd);
+						if (_g_fork_)
+							break;
+					}
+				} else
+					r = -1;
+
+				if (!_g_fork_) {
+					TRACE("server: shutdown\n");
+					close_ipc();
 				}
-
-				ipc_close(s_ipc, &fd);
 			} else
 				usage();
 		}

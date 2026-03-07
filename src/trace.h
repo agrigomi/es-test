@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #if _TRACE_
-#define TRACE(...)      { fprintf_timestamp(stderr); fprintf(stderr, __VA_ARGS__); }
+#define TRACE(...)      { fprintf(stderr, __VA_ARGS__); fflush(stderr); }
 #define TRACEb(ptr, n)	fprintf_bytes(stderr, ptr, n)
 #if _DEBUG_
 #define TRACEfl(...)    fprintf(stderr, "[%s] [%d] ", __FILE__, __LINE__);\

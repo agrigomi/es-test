@@ -4,7 +4,7 @@
 
 #include <semaphore.h>
 
-#define MAX_SHM_NAME		16
+#define MAX_SHM_NAME		32
 #define MAX_IO_BUFFER		1024
 
 
@@ -20,10 +20,11 @@
 typedef struct {
 	int		mode;		/* IPC mode */
 	sem_t		s_data;		/* request semaphore */
-	sem_t		s_result;	/* result semaphore */
+	sem_t		s_ready;	/* result semaphore */
 	char		shm_name[MAX_SHM_NAME]; /* shared memory name */
 	unsigned int	size; 		/* data size */
 	unsigned char	io_buffer[MAX_IO_BUFFER];
+	/* ... */
 } _ipc_t;
 
 #ifdef __cplusplus

@@ -21,7 +21,7 @@ _ipc_t *open_shared_memory(const char *ifc, int *pfd) {
 			if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE,
 						MAP_SHARED, fd, 0))) {
 				if (sem_init(&(r->s_data), 1, 0) == 0 &&
-						sem_init(&(r->s_result), 1, 0) == 0) {
+						sem_init(&(r->s_ready), 1, 0) == 0) {
 					strncpy(r->shm_name, ifc, sizeof(r->shm_name) - 1);
 					r->mode = IPC_MODE_SHM;
 				} else {
@@ -94,10 +94,18 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 }
 
 void ipc_close(_ipc_t *cxt, int *pfd) {
-	if (cxt->mode == IPC_MODE_SHM)
+	if (cxt->mode == IPC_MODE_SHM) {
 #if USE_SHARED_MEMORY
+		TRACE("libipc: Close SHM '%s'\n", cxt->shm_name);
+		cxt->size = 0;
+		sem_post(&(cxt->s_data));
+		sem_destroy(&(cxt->s_data));
+		sem_post(&(cxt->s_ready));
+		sem_destroy(&(cxt->s_ready));
 		shm_unlink(cxt->shm_name);
 #endif
+	}
+
 	if (pfd)
 		close(*pfd);
 }
@@ -115,6 +123,9 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 
 	if (server_cxt->mode == IPC_MODE_SHM) {
 #if USE_SHARED_MEMORY
+		server_cxt->size = 0;
+		memset(server_cxt->io_buffer, 0, sizeof(server_cxt->io_buffer));
+
 		if (sem_wait(&(server_cxt->s_data)) == 0) {
 			/* The IO buffer is expected to contain the name of the client's shared area */
 			int fd = shm_open((char *)server_cxt->io_buffer, O_RDWR, 0);
@@ -124,12 +135,12 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 					*pfd = fd;
 
 				if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)))
-					sem_post(&(server_cxt->s_result));
+					sem_post(&(server_cxt->s_ready));
 				else {
 					TRACE("libipc: Unable to map client's shared area '%s'\n", server_cxt->io_buffer);
 				}
 			} else {
-				TRACE("libipc: Failed to open client's shared area\n");
+				TRACE("libipc: Failed to open client's shared area '%s'\n", server_cxt->io_buffer);
 			}
 		}
 #endif
@@ -142,7 +153,6 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 		/* ToDo UNIX sockets */
 #endif
 	}
-
 
 	return r;
 }
@@ -162,7 +172,7 @@ int ipc_connect(_ipc_t *client_cxt) {
 				strncpy((char *)server_cxt->io_buffer, client_cxt->shm_name,
 						sizeof(server_cxt->io_buffer));
 				sem_post(&(server_cxt->s_data));
-				if (sem_wait(&(server_cxt->s_result)) == 0) {
+				if (sem_wait(&(server_cxt->s_ready)) == 0) {
 					r = E_IPC_OK;
 					TRACE("libipc: Established connection to server '%s'\n", server_cxt->shm_name);
 				} else {
@@ -187,7 +197,6 @@ int ipc_connect(_ipc_t *client_cxt) {
 #endif
 	}
 
-
 	return r;
 }
 
@@ -204,6 +213,8 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 		cxt->size = n;
 		if (sem_post(&(cxt->s_data)) == 0)
 			r = n;
+		/* waiting for ready signal */
+		sem_wait(&(cxt->s_ready));
 #endif
 	}
 
@@ -222,8 +233,11 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 
 			memcpy(buffer, cxt->io_buffer, n);
 			r = n;
+			/* ready signal */
+			sem_post(&(cxt->s_ready));
 		} else {
 			TRACE("libipc: Failed to read\n");
+			r = -1;
 		}
 #endif
 	}
