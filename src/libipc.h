@@ -16,7 +16,9 @@
 #define E_IPC_OK		0
 #define E_IPC_FAIL		-1
 
-/* IPC context */
+/* IPC context
+NOTE : In future implementation (with INET and UNIX),
+       this structure must be hidden behind void pointer */
 typedef struct {
 	int		mode;		/* IPC mode */
 	sem_t		s_data;		/* request semaphore */

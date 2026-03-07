@@ -76,6 +76,7 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 #if USE_SHARED_MEMORY
 			/* Create uniqie name for client shared memory */
 			sz = snprintf(ifc, sizeof(ifc), "SMC%d", getpid());
+
 			/* Open client side shared area for data transfer */
 			if ((r = open_shared_memory(ifc, pfd))) {
 				/* Set destination (server SHM) in own IO buffer */
@@ -123,6 +124,7 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 
 	if (server_cxt->mode == IPC_MODE_SHM) {
 #if USE_SHARED_MEMORY
+		/* Clear server IO area */
 		server_cxt->size = 0;
 		memset(server_cxt->io_buffer, 0, sizeof(server_cxt->io_buffer));
 
@@ -135,6 +137,7 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 					*pfd = fd;
 
 				if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)))
+					/* Send ready signal */
 					sem_post(&(server_cxt->s_ready));
 				else {
 					TRACE("libipc: Unable to map client's shared area '%s'\n", server_cxt->io_buffer);
@@ -172,6 +175,8 @@ int ipc_connect(_ipc_t *client_cxt) {
 				strncpy((char *)server_cxt->io_buffer, client_cxt->shm_name,
 						sizeof(server_cxt->io_buffer));
 				sem_post(&(server_cxt->s_data));
+
+				/* Waiting for ready signal */
 				if (sem_wait(&(server_cxt->s_ready)) == 0) {
 					r = E_IPC_OK;
 					TRACE("libipc: Established connection to server '%s'\n", server_cxt->shm_name);

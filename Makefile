@@ -5,7 +5,7 @@ INCLUDE = include
 CC = gcc
 LD = ld
 
-CC_FLAGS = -Wall -Wextra -g -O0 -I./$(INCLUDE)/
+CC_FLAGS = -Wall -Wextra -g -O0 -I./$(INCLUDE)/ -D_GNU_SOURCE
 LD_FLAGS = -g -fPIC -shared
 
 TARGET_LIBIPC = $(BUILD)/libipc.so

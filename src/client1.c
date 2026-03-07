@@ -103,21 +103,25 @@ int main(int argc, char *argv[]) {
 
 				if (_g_ipc_) {
 					if (ipc_connect(_g_ipc_) == E_IPC_OK) {
+						char buf[MAX_IO_BUFFER] = "";
 
-						char inb[MAX_IO_BUFFER] = "";
-
-						while (fgets(inb, sizeof(inb), stdin)) {
-							remove_eol(inb);
-							if (strncasecmp(inb, "exit", 4) == 0 ||
-									strncasecmp(inb, "quit", 4) == 0)
+						while (fgets(buf, sizeof(buf), stdin)) {
+							remove_eol(buf);
+							if (strncasecmp(buf, "exit", 4) == 0 ||
+									strncasecmp(buf, "quit", 4) == 0)
 								break;
-							ipc_write(_g_ipc_, inb, strlen(inb));
-							memset(inb, 0, sizeof(inb));
-							int nc = ipc_read(_g_ipc_, inb, sizeof(inb));
-							inb[nc] = 0;
-							printf("%s", inb);
-							memset(inb, 0, sizeof(inb));
+							/* Send request */
+							ipc_write(_g_ipc_, buf, strlen(buf));
+							memset(buf, 0, sizeof(buf));
+
+							/* Read response */
+							int nc = ipc_read(_g_ipc_, buf, sizeof(buf));
+							buf[nc] = 0;
+							printf("%s", buf);
+							memset(buf, 0, sizeof(buf));
 						}
+					} else {
+						LOG("ERROR: No connection to '%s'\n", dst);
 					}
 
 					close_ipc();
