@@ -209,12 +209,16 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 		if (n > sizeof(cxt->io_buffer))
 			n = sizeof(cxt->io_buffer);
 
+		/* copy user data to IO buffer */
 		memcpy(cxt->io_buffer, data, n);
 		cxt->size = n;
-		if (sem_post(&(cxt->s_data)) == 0)
+
+		if (sem_post(&(cxt->s_data)) == 0) {
 			r = n;
-		/* waiting for ready signal */
-		sem_wait(&(cxt->s_ready));
+
+			/* waiting for ready signal */
+			sem_wait(&(cxt->s_ready));
+		}
 #endif
 	}
 
@@ -231,11 +235,15 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 			if (n > cxt->size)
 				n = cxt->size;
 
+			/* copy IO data to user */
 			memcpy(buffer, cxt->io_buffer, n);
+
+			/* clear IO data */
 			memset(cxt->io_buffer, 0, n);
 			r = n;
 			cxt->size = 0;
-			/* ready signal */
+
+			/* send ready signal */
 			sem_post(&(cxt->s_ready));
 		} else {
 			TRACE("libipc: Failed to read\n");
