@@ -232,7 +232,9 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 				n = cxt->size;
 
 			memcpy(buffer, cxt->io_buffer, n);
+			memset(cxt->io_buffer, 0, n);
 			r = n;
+			cxt->size = 0;
 			/* ready signal */
 			sem_post(&(cxt->s_ready));
 		} else {

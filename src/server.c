@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <string.h>
 #include "libipc.h"
 #include "argv.h"
 #include "trace.h"
@@ -71,15 +72,27 @@ static int do_fork(_ipc_t *ipc_cxt, int fd) {
 		char buf[256];
 		int n = 0;
 
+		/* we need to know about parent/child process */
 		_g_fork_ = 1;
+
+		/* _g_server_shm_ needed only in parent process (for listening */
 		ipc_unmap_shm(_g_server_shm_, &_g_fd_shm_);
 		_g_server_shm_ = NULL;
 
 		while ((n = ipc_read(ipc_cxt, buf, sizeof(buf))) > 0) {
-			printf("%s\n", buf);
 			char resp[256];
-			int szr = snprintf(resp, sizeof(resp), "response: %s\n", buf);
-			ipc_write(ipc_cxt, resp, szr);
+
+			memset(resp, 0, sizeof(resp));
+			int rsz = 0;
+
+			// call protocol here
+			// ...
+			rsz = snprintf(resp, sizeof(resp), ">> %s\n", buf);
+			usleep(10000);
+			///////////////////
+
+			memset(buf, 0, sizeof(buf));
+			ipc_write(ipc_cxt, resp, rsz);
 		}
 
 		TRACE("fork %d exit\b", getpid());
@@ -141,6 +154,7 @@ int main(int argc, char *argv[]) {
 					while (_g_running_) {
 						int cfd = -1;
 						_ipc_t *c_ipc = ipc_listen(_g_server_shm_, &cfd);
+
 						r = do_fork(c_ipc, cfd);
 
 						if (_g_fork_)

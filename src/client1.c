@@ -69,6 +69,15 @@ void sig_handler(int sig) {
 	}
 }
 
+static void remove_eol(char *str) {
+	size_t l = strlen(str);
+
+	while(str[l] < ' ' && l > 0) {
+		str[l] = 0;
+		l--;
+	}
+}
+
 int main(int argc, char *argv[]) {
 	int r = 0;
 
@@ -98,11 +107,14 @@ int main(int argc, char *argv[]) {
 						char inb[MAX_IO_BUFFER] = "";
 
 						while (fgets(inb, sizeof(inb), stdin)) {
+							remove_eol(inb);
 							if (strncasecmp(inb, "exit", 4) == 0 ||
 									strncasecmp(inb, "quit", 4) == 0)
 								break;
 							ipc_write(_g_ipc_, inb, strlen(inb));
-							ipc_read(_g_ipc_, inb, sizeof(inb));
+							memset(inb, 0, sizeof(inb));
+							int nc = ipc_read(_g_ipc_, inb, sizeof(inb));
+							inb[nc] = 0;
 							printf("%s", inb);
 							memset(inb, 0, sizeof(inb));
 						}
