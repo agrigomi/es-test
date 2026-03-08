@@ -18,6 +18,7 @@
 #define OP_LEN	"LEN"
 #define OP_CAT	"CAT"
 #define OP_FIND	"FIND"
+#define OP_HELP	"HELP"
 
 typedef struct {
 	const char	*opcode;
@@ -247,6 +248,25 @@ static int do_find(char *operands, char *resp, int sz_resp) {
 	return r;
 }
 
+static int do_help(char __attribute__((unused))*operands, char *resp, int sz_resp) {
+	static const char *help = "\
+ Protocol Syntax:\n\
+ <opcode> <operand1>[,<operand2>]\n\
+ \n\
+ Supported Opcodes:\n\
+ADD: Add two numbers.\n\
+SUB: Subtract two numbers.\n\
+MUL: Multiply two numbers.\n\
+DIV: Divide operand1 by operand2.\n\
+LEN: Calculate the length of a string (uses operand1).\n\
+CAT: Concatenate operand1 and operand2.\n\
+FIND: Find the starting index of substring (operand1) within operand2.\n\
+?: Print this help\n\
+HELP: Print this help\n\
+";
+	return  response(resp, sz_resp, "%s\n", help);
+}
+
 static int do_opcode(const char *opcode, char *operands, char *resp, int sz_resp) {
 	int r = 0;
 	int n = 0;
@@ -258,6 +278,8 @@ static int do_opcode(const char *opcode, char *operands, char *resp, int sz_resp
 		{ OP_LEN,	do_len },
 		{ OP_CAT,	do_cat },
 		{ OP_FIND,	do_find },
+		{ OP_HELP,	do_help },
+		{ "?",		do_help },
 		{ NULL,		NULL }
 	};
 

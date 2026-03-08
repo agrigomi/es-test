@@ -82,7 +82,6 @@ static void remove_eol(char *str) {
 
 int main(int argc, char *argv[]) {
 	int r = 0;
-
 	int signals [] = { SIGINT, SIGTERM, SIGKILL, 0 };
 	int n = 0;
 

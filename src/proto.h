@@ -18,6 +18,8 @@
  * - LEN: Calculate the length of a string (uses operand1).
  * - CAT: Concatenate operand1 and operand2.
  * - FIND: Find the starting index of substring (operand1) within operand2.
+ * - HELP: Print this help
+ * - ?: Print this help
  */
 
 /**
