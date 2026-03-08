@@ -4,7 +4,12 @@
  * @details This library provides an interface for IPC using Shared Memory (SHM),
  * Internet sockets (INET), and Local Unix sockets.
  *
- */
+ * How API works for SHM IPC:
+ * The client and server create their own SHM areas.
+ * Server SHM is used only to accept client connections.
+ * The client creates a unique named (including PID) SHM area used for data transfer.
+ * This scheme helps avoid limitations on active client connections.
+*/
 
 #ifndef __LIBIPC_H__
 #define __LIBIPC_H__
