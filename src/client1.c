@@ -12,6 +12,7 @@
 #define OPT_SHELP	"h"
 #define OPT_SVERSION	"v"
 #define OPT_DST		"dst"
+#define OPT_PROMPT	"prompt"
 
 #define VERSION	"1.0.0"
 
@@ -23,6 +24,7 @@ static _argv_t args[] = {
 	{ OPT_HELP,	OF_LONG,			NULL,		"Print this help" },
 	{ OPT_SVERSION,	0,				NULL,		"Print version" },
 	{ OPT_DST,	OF_LONG|OF_VALUE,		NULL,		"Destination address (shared memory name or IP)" },
+	{ OPT_PROMPT,	OF_LONG|OF_VALUE|OF_PRESENT,	"> ",		"Define custom prompt '> ' by default" },
 	//...
 	{ NULL,		0,				NULL,		NULL }
 };
@@ -39,7 +41,7 @@ static void usage(void) {
 
 		n++;
 	}
-	printf("\nUsage: hl [options]\n");
+	printf("\nUsage: client1 [options]\n");
 }
 
 static const char *opt_dst(void) {
@@ -70,9 +72,9 @@ void sig_handler(int sig) {
 }
 
 static void remove_eol(char *str) {
-	size_t l = strlen(str);
+	int l = (int)strlen(str);
 
-	while(str[l] < ' ' && l > 0) {
+	while(str[l] < ' ' && (int)l >= 0) {
 		str[l] = 0;
 		l--;
 	}
@@ -104,21 +106,31 @@ int main(int argc, char *argv[]) {
 				if (_g_ipc_) {
 					if (ipc_connect(_g_ipc_) == E_IPC_OK) {
 						char buf[MAX_IO_BUFFER] = "";
+						const char *prompt = argv_value(OPT_PROMPT);
 
-						while (fgets(buf, sizeof(buf), stdin)) {
+						while (1) {
+							/* display prompt */
+							fprintf(stderr, prompt);
+
+							/* read line from stdin */
+							fgets(buf, sizeof(buf), stdin);
 							remove_eol(buf);
-							if (strncasecmp(buf, "exit", 4) == 0 ||
-									strncasecmp(buf, "quit", 4) == 0)
-								break;
-							/* Send request */
-							ipc_write(_g_ipc_, buf, strlen(buf));
-							memset(buf, 0, sizeof(buf));
 
-							/* Read response */
-							int nc = ipc_read(_g_ipc_, buf, sizeof(buf));
-							buf[nc] = 0;
-							printf("%s", buf);
-							memset(buf, 0, sizeof(buf));
+							if (strlen(buf)) {
+								if (strncasecmp(buf, "exit", 4) == 0 ||
+										strncasecmp(buf, "quit", 4) == 0)
+									break;
+
+								/* Send request */
+								ipc_write(_g_ipc_, buf, strlen(buf));
+								memset(buf, 0, sizeof(buf));
+
+								/* Read response */
+								int nc = ipc_read(_g_ipc_, buf, sizeof(buf));
+								buf[nc] = 0;
+								printf("%s", buf);
+								memset(buf, 0, sizeof(buf));
+							}
 						}
 					} else {
 						LOG("ERROR: No connection to '%s'\n", dst);
@@ -126,7 +138,8 @@ int main(int argc, char *argv[]) {
 
 					close_ipc();
 				}
-			}
+			} else
+				usage();
 		}
 	} else
 		usage();

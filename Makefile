@@ -19,8 +19,8 @@ LIBIPC_SRC = $(SRC)/libipc.c
 LIBIPC_DEP = $(COMMON_DEPS) $(INCLUDE)/ipc_defs.h
 LIBIPC_OBJS = $(BUILD)/libipc.o
 
-SERVER_SRC = $(SRC)/server.c $(SRC)/argv.c $(SRC)/trace.c
-SERVER_DEP = $(COMMON_DEPS) $(SRC)/argv.h $(SRC)/dtype.h
+SERVER_SRC = $(SRC)/server.c $(SRC)/argv.c $(SRC)/trace.c $(SRC)/proto.c
+SERVER_DEP = $(COMMON_DEPS) $(SRC)/argv.h $(SRC)/dtype.h $(SRC)/proto.h
 
 CLIENT1_SRC = $(SRC)/client1.c $(SRC)/argv.c $(SRC)/trace.c
 CLIENT1_DEP = $(COMMON_DEPS) $(SRC)/argv.h $(SRC)/dtype.h

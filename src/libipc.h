@@ -13,21 +13,21 @@
 
 /** @name Configuration Constants */
 /** @{ */
-#define MAX_SHM_NAME            32   /**< Maximum length for shared memory object names */
-#define MAX_IO_BUFFER           1024 /**< Maximum size of the I/O buffer */
+#define MAX_SHM_NAME	32   /**< Maximum length for shared memory object names */
+#define MAX_IO_BUFFER	1024 /**< Maximum size of the I/O buffer */
 /** @} */
 
 /** @name IPC Modes */
 /** @{ */
-#define IPC_MODE_SHM            1    /**< Mode: Shared memory */
-#define IPC_MODE_INET           2    /**< Mode: Internet sockets (TCP/IP) */
-#define IPC_MODE_UNIX           3    /**< Mode: Local Unix domain sockets */
+#define IPC_MODE_SHM	1    /**< Mode: Shared memory */
+#define IPC_MODE_INET	2    /**< Mode: Internet sockets (TCP/IP) */
+#define IPC_MODE_UNIX	3    /**< Mode: Local Unix domain sockets */
 /** @} */
 
 /** @name Error Codes */
 /** @{ */
-#define E_IPC_OK                0    /**< Operation successful */
-#define E_IPC_FAIL              -1   /**< Operation failed */
+#define E_IPC_OK	0    /**< Operation successful */
+#define E_IPC_FAIL	-1   /**< Operation failed */
 /** @} */
 
 /**
@@ -37,13 +37,13 @@
  *       should be abstracted behind a void pointer to ensure encapsulation.
  */
 typedef struct {
-        int             mode;                   /**< Selected IPC mode */
-        sem_t           s_data;                 /**< Semaphore for signaling requests */
-        sem_t           s_ready;                /**< Semaphore for signaling results/readiness */
-        char            shm_name[MAX_SHM_NAME]; /**< Shared memory segment name */
-        unsigned int    size;                   /**< Current data size in buffer */
-        unsigned char   io_buffer[MAX_IO_BUFFER]; /**< Internal data buffer */
-        /* ... */
+	int             mode;                   /**< Selected IPC mode */
+	sem_t           s_data;                 /**< Semaphore for signaling requests */
+	sem_t           s_ready;                /**< Semaphore for signaling results/readiness */
+	char            shm_name[MAX_SHM_NAME]; /**< Shared memory segment name */
+	unsigned int    size;                   /**< Current data size in buffer */
+	unsigned char   io_buffer[MAX_IO_BUFFER]; /**< Internal data buffer */
+	/* ... */
 } _ipc_t;
 
 #ifdef __cplusplus

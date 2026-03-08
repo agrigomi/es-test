@@ -128,6 +128,7 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 		server_cxt->size = 0;
 		memset(server_cxt->io_buffer, 0, sizeof(server_cxt->io_buffer));
 
+		/* Starts listening for incoming connection */
 		if (sem_wait(&(server_cxt->s_data)) == 0) {
 			/* The IO buffer is expected to contain the name of the client's shared area */
 			int fd = shm_open((char *)server_cxt->io_buffer, O_RDWR, 0);
@@ -172,8 +173,11 @@ int ipc_connect(_ipc_t *client_cxt) {
 			_ipc_t *server_cxt = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 			if (server_cxt) {
+				/* Copy client SHM name to server IO buffer */
 				strncpy((char *)server_cxt->io_buffer, client_cxt->shm_name,
 						sizeof(server_cxt->io_buffer));
+
+				/* send connection request */
 				sem_post(&(server_cxt->s_data));
 
 				/* Waiting for ready signal */
@@ -218,12 +222,14 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 		memcpy(cxt->io_buffer, data, n);
 		cxt->size = n;
 
+		/* send data */
 		if (sem_post(&(cxt->s_data)) == 0) {
 			r = n;
 
 			/* waiting for ready signal */
 			sem_wait(&(cxt->s_ready));
-		}
+		} else
+			r = E_IPC_FAIL;
 #endif
 	}
 
@@ -252,7 +258,7 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 			sem_post(&(cxt->s_ready));
 		} else {
 			TRACE("libipc: Failed to read\n");
-			r = -1;
+			r = E_IPC_FAIL;
 		}
 #endif
 	}

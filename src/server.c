@@ -8,6 +8,7 @@
 #include <malloc.h>
 #include "libipc.h"
 #include "argv.h"
+#include "proto.h"
 #include "trace.h"
 
 #define OPT_HELP	"help"
@@ -74,8 +75,8 @@ typedef struct {
 
 static void *io_thread(void *arg) {
 	_udata_t *ud = (_udata_t *)arg;
-	char inp[MAX_IO_BUFFER];
-	char out[MAX_IO_BUFFER];
+	char inp[MAX_IO_BUFFER] = "";
+	char out[MAX_IO_BUFFER] = "";
 	int n = 0;
 
 	ud->running = 1;
@@ -88,11 +89,12 @@ static void *io_thread(void *arg) {
 
 			// call protocol here
 			// ...
-			rsz = snprintf(out, sizeof(out), ">> %s\n", inp);
+			rsz = proto_exec(inp, out, sizeof(out));
 			memset(inp, 0, sizeof(inp));
+			/* time to sync */
 			usleep(10000);
-			///////////////////
 
+			/* send response */
 			ipc_write(ud->ipc_cxt, out, rsz);
 		} else
 			break;
@@ -109,8 +111,8 @@ static int do_fork(_ipc_t *ipc_cxt, int fd) {
 
 	if (pid == 0) {
 		/* child process */
-		char inp[MAX_IO_BUFFER];
-		char out[MAX_IO_BUFFER];
+		char inp[MAX_IO_BUFFER] = "";
+		char out[MAX_IO_BUFFER] = "";
 		int n = 0;
 
 		/* we need to know about parent/child process */
@@ -126,22 +128,20 @@ static int do_fork(_ipc_t *ipc_cxt, int fd) {
 			memset(out, 0, sizeof(out));
 
 			// call protocol here
-			// ...
-			rsz = snprintf(out, sizeof(out), ">> %s\n", inp);
+			rsz = proto_exec(inp, out, sizeof(out));
 			memset(inp, 0, sizeof(inp));
+			/* time to sync */
 			usleep(10000);
-			///////////////////
 
+			/* send response */
 			ipc_write(ipc_cxt, out, rsz);
 		}
 
-		TRACE("fork %d exit\n", getpid());
 		ipc_unmap_shm(ipc_cxt, &fd);
 		exit(0);
-	} else {
+	} else
 		/* parent process */
 		ipc_unmap_shm(ipc_cxt, &fd); /* Unmap client */
-	}
 
 	return r;
 }
@@ -163,7 +163,6 @@ void sig_handler(int sig) {
 				while (1) {
 					if ((pid = wait3 (&stat, WNOHANG, (struct rusage *)NULL )) <= 0)
 						break;
-					TRACE("SIGCHLD: PID=%u, STATUS=%d\n", getpid(), pid, stat);
 				}
 			} break;
 
@@ -218,10 +217,8 @@ int main(int argc, char *argv[]) {
 				} else
 					r = -1;
 
-				if (!_g_fork_) {
-					TRACE("server: shutdown\n");
+				if (!_g_fork_)
 					close_ipc();
-				}
 			} else
 				usage();
 		}
