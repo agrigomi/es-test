@@ -9,7 +9,7 @@
 #include "trace.h"
 
 #if USE_SHARED_MEMORY
-_ipc_t *open_shared_memory(const char *ifc, int *pfd) {
+static _ipc_t *open_shared_memory(const char *ifc, int *pfd) {
 	_ipc_t *r = NULL;
 	int fd = shm_open(ifc, O_CREAT | O_EXCL | O_RDWR, 0600);
 
@@ -68,6 +68,7 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 	char ifc[MAX_SHM_NAME];
 	int sz = 0;
+	static int counter = 0;
 
 	memset(ifc, 0, sizeof(ifc));
 
@@ -75,7 +76,8 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 		case IPC_MODE_SHM:
 #if USE_SHARED_MEMORY
 			/* Create uniqie name for client shared memory */
-			sz = snprintf(ifc, sizeof(ifc), "SMC%d", getpid());
+			counter++;
+			sz = snprintf(ifc, sizeof(ifc), "c%dp%d", counter, getpid());
 
 			/* Open client side shared area for data transfer */
 			if ((r = open_shared_memory(ifc, pfd))) {
