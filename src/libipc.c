@@ -9,6 +9,12 @@
 #include "trace.h"
 
 #if USE_SHARED_MEMORY
+/*
+* Creates a shared memory context.
+* ifc: Interface, SHM name, IP or lan interface (depends on selected mode
+* pfd: Pointer to file descriptor
+* return pointer to IPC context
+*/
 static _ipc_t *open_shared_memory(const char *ifc, int *pfd) {
 	_ipc_t *r = NULL;
 	int fd = shm_open(ifc, O_CREAT | O_EXCL | O_RDWR, 0600);
@@ -45,6 +51,14 @@ static _ipc_t *open_shared_memory(const char *ifc, int *pfd) {
 }
 #endif
 
+/*
+ * Server side: Initialize and create an IPC context.
+ *
+ * ifc: Interface name or path to bind to.
+ * mode: The IPC mode (SHM, INET, or UNIX).
+ * pfd: Pointer to an integer where the file descriptor will be stored.
+ * return _ipc_t* Pointer to the allocated context, or NULL on failure.
+ */
 _ipc_t *ipc_server(const char *ifc, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 
@@ -64,6 +78,13 @@ _ipc_t *ipc_server(const char *ifc, int mode, int *pfd) {
 	return r;
 }
 
+/*
+ * Client side: Initialize an IPC context for a client.
+ *
+ * dst: Destination address or resource name.
+ * mode: The IPC mode to use pfd Pointer to store the client file descriptor.
+ * return _ipc_t* Pointer to the client context, or NULL on failure.
+ */
 _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 	char ifc[MAX_SHM_NAME];
@@ -96,6 +117,12 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	return r;
 }
 
+/*
+ * Close the IPC connection and clean up resources.
+ *
+ * cxt: The IPC context to close.
+ * pfd: Pointer to the file descriptor to be closed.
+ */
 void ipc_close(_ipc_t *cxt, int *pfd) {
 	if (cxt->mode == IPC_MODE_SHM) {
 #if USE_SHARED_MEMORY
@@ -114,6 +141,11 @@ void ipc_close(_ipc_t *cxt, int *pfd) {
 }
 
 #if USE_SHARED_MEMORY
+ /*  Unmap shared memory segments (SHM mode specific).
+ *
+ *  cxt: The IPC context.
+ *  pfd: Pointer to the associated file descriptor.
+ */
 void ipc_unmap_shm(_ipc_t *cxt, int *pfd) {
 	munmap(cxt, sizeof(_ipc_t));
 	if (pfd)
@@ -121,6 +153,12 @@ void ipc_unmap_shm(_ipc_t *cxt, int *pfd) {
 }
 #endif
 
+/*  Server side: Listen for incoming client connections.
+ *
+ * server_cxt: The server context created by ipc_server.
+ * pfd: Pointer to store the connection file descriptor.
+ * return _ipc_t* Connection-specific IPC context, or NULL on failure.
+ */
 _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 	_ipc_t *r = NULL;
 
@@ -163,6 +201,12 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 	return r;
 }
 
+/*
+ * Client side: Establish connection to the server.
+ *
+ * client_cxt: The client context to connect.
+ * return int E_IPC_OK on success, E_IPC_FAIL on failure.
+ */
 int ipc_connect(_ipc_t *client_cxt) {
 	int r = E_IPC_FAIL;
 
@@ -211,6 +255,14 @@ int ipc_connect(_ipc_t *client_cxt) {
 	return r;
 }
 
+/*
+ * Write data to the IPC channel.
+ *
+ * cxt: The active IPC context.
+ * data: Pointer to the source data buffer.
+ * size: Number of bytes to write.
+ * return int Number of bytes written, or E_IPC_FAIL on error.
+ */
 int ipc_write(_ipc_t *cxt, void *data, int size) {
 	int r = 0;
 	unsigned int n = size;
@@ -238,6 +290,14 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 	return r;
 }
 
+/*
+ * Read data from the IPC channel.
+ *
+ * cxt: The active IPC context.
+ * buffer: Pointer to the destination buffer.
+ * size: Maximum number of bytes to read.
+ * return int Number of bytes read, or E_IPC_FAIL on error.
+ */
 int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 	int r = 0;
 	unsigned int n = size;
