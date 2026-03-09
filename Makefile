@@ -1,6 +1,7 @@
 BUILD = build
 SRC = src
 INCLUDE = include
+DOC = docs
 
 CC = gcc
 LD = ld
@@ -48,10 +49,14 @@ $(LIBIPC_OBJS): $(LIBIPC_SRC) $(LIBIPC_DEP)
 $(BUILD):
 	mkdir $@
 
+$(DOC):
+	doxygen doxy.cfg
+
 server: $(TARGET_SERVER)
 client1: $(TARGET_CLIENT1)
 client2: $(TARGET_CLIENT2)
-
+doc:	$(DOC)
 clean:
 	rm $(BUILD)/*
+	rm -rf $(DOC)
 
