@@ -169,6 +169,36 @@ void sig_handler(int sig) {
 	}
 }
 
+static int server_loop(void) {
+	int r = 0;
+	int use_threads = argv_check(OPT_STHREADS);
+
+	_g_running_ = 1;
+
+	while (_g_running_) {
+		int cfd = -1;
+		_ipc_t *c_ipc = ipc_listen(_g_server_shm_, &cfd);
+
+		if (use_threads) {
+			/* Switch to threads model */
+			_udata_t *arg = (_udata_t *)malloc(sizeof(_udata_t));
+
+			if (arg) {
+				arg->running = 0;
+				arg->ipc_cxt = c_ipc;
+				arg->fd = cfd;
+
+				pthread_create(&(arg->thread), NULL, io_thread, arg);
+				pthread_detach(arg->thread);
+				pthread_setname_np(arg->thread, (const char *)c_ipc->shm_name);
+			}
+		} else
+			r = do_fork(c_ipc, cfd);
+	}
+
+	return r;
+}
+
 int main(int argc, char *argv[]) {
 	int r = 0;
 	int signals [] = { SIGINT, SIGTERM, SIGKILL, SIGCHLD, SIGSEGV, 0 };
@@ -189,32 +219,9 @@ int main(int argc, char *argv[]) {
 			if ((_g_ifc_ = opt_ifc())) {
 				_g_server_shm_ = ipc_server(_g_ifc_, IPC_MODE_SHM, &_g_fd_shm_);
 
-				if (_g_server_shm_) {
-					int use_threads = argv_check(OPT_STHREADS);
-
-					_g_running_ = 1;
-
-					while (_g_running_) {
-						int cfd = -1;
-						_ipc_t *c_ipc = ipc_listen(_g_server_shm_, &cfd);
-
-						if (use_threads) {
-							/* Switch to threads model */
-							_udata_t *arg = (_udata_t *)malloc(sizeof(_udata_t));
-
-							if (arg) {
-								arg->running = 0;
-								arg->ipc_cxt = c_ipc;
-								arg->fd = cfd;
-
-								pthread_create(&(arg->thread), NULL, io_thread, arg);
-								pthread_detach(arg->thread);
-								pthread_setname_np(arg->thread, (const char *)c_ipc->shm_name);
-							}
-						} else
-							r = do_fork(c_ipc, cfd);
-					}
-				} else
+				if (_g_server_shm_)
+					r = server_loop();
+				else
 					r = -1;
 
 				if (!_g_fork_)
@@ -224,7 +231,6 @@ int main(int argc, char *argv[]) {
 		}
 	} else
 		usage();
-
 
 	return r;
 }

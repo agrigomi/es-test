@@ -111,6 +111,39 @@ static void remove_eol(char *str) {
 	}
 }
 
+static int client_loop(void) {
+	int r = 0;
+	char buf[MAX_IO_BUFFER] = "";
+	const char *prompt = argv_value(OPT_PROMPT);
+
+	while (1) {
+		/* display prompt */
+		fprintf(stderr, prompt);
+
+		/* read line from stdin */
+		fgets(buf, sizeof(buf), stdin);
+		remove_eol(buf);
+
+		if (strlen(buf)) {
+			if (strncasecmp(buf, "exit", 4) == 0 ||
+					strncasecmp(buf, "quit", 4) == 0)
+				break;
+
+			/* Send request */
+			_ipc_write(_g_ipc_, buf, strlen(buf));
+			memset(buf, 0, sizeof(buf));
+
+			/* Read response */
+			int nc = _ipc_read(_g_ipc_, buf, sizeof(buf));
+			buf[nc] = 0;
+			printf("%s", buf);
+			memset(buf, 0, sizeof(buf));
+		}
+	}
+
+	return r;
+}
+
 int main(int argc, char *argv[]) {
 	int r = 0;
 	int signals [] = { SIGINT, SIGTERM, SIGKILL, 0 };
@@ -125,7 +158,7 @@ int main(int argc, char *argv[]) {
 	if (argv_parse(argc, (_cstr_t *)argv, args)) {
 		if (argv_check(OPT_SVERSION))
 			printf("%s\n", VERSION);
-		if (argv_check(OPT_SHELP) || argv_check(OPT_HELP))
+		else if (argv_check(OPT_SHELP) || argv_check(OPT_HELP))
 			usage();
 		else {
 			const char *libipc = argv_value(OPT_LIBIPC);
@@ -136,40 +169,15 @@ int main(int argc, char *argv[]) {
 					_g_ipc_ = _ipc_client(dst, IPC_MODE_SHM, &_g_shm_fd_);
 
 					if (_g_ipc_) {
-						if (_ipc_connect(_g_ipc_) == E_IPC_OK) {
-							char buf[MAX_IO_BUFFER] = "";
-							const char *prompt = argv_value(OPT_PROMPT);
-
-							while (1) {
-								/* display prompt */
-								fprintf(stderr, prompt);
-
-								/* read line from stdin */
-								fgets(buf, sizeof(buf), stdin);
-								remove_eol(buf);
-
-								if (strlen(buf)) {
-									if (strncasecmp(buf, "exit", 4) == 0 ||
-											strncasecmp(buf, "quit", 4) == 0)
-										break;
-
-									/* Send request */
-									_ipc_write(_g_ipc_, buf, strlen(buf));
-									memset(buf, 0, sizeof(buf));
-
-									/* Read response */
-									int nc = _ipc_read(_g_ipc_, buf, sizeof(buf));
-									buf[nc] = 0;
-									printf("%s", buf);
-									memset(buf, 0, sizeof(buf));
-								}
-							}
-						} else {
+						if (_ipc_connect(_g_ipc_) == E_IPC_OK)
+							r = client_loop();
+						else {
 							LOG("ERROR: No connection to '%s'\n", dst);
 						}
 
 						close_ipc();
-					}
+					} else
+						r = -1;
 				} else {
 					printf("Failed to link '%s'\n", libipc);
 				}
