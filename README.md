@@ -21,6 +21,7 @@ This scheme helps avoid limitations on active client connections.
 *   `proto.h`, `proto.c`: Implements simple text based protocol as part of server.
 *   `client1.c`: Implements client example and produces `build/client1` linked with `libipc.so`.
 *   `client2.c`: Implements the same example like `client1` but links `libipc.so` on runtime using `dlopen`, `dlsym` and `dlclose`.
+*   `argv.h`, `argv.c`: Command line argument parser (ugly but easy to use). Built into the server and clients.
 
 ## How to Get
 ~~~
