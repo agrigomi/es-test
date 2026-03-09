@@ -57,6 +57,6 @@ client1: $(TARGET_CLIENT1)
 client2: $(TARGET_CLIENT2)
 doc:	$(DOC)
 clean:
-	rm $(BUILD)/*
+	rm -rf $(BUILD)
 	rm -rf $(DOC)
 

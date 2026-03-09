@@ -59,3 +59,8 @@ The result should be prompt '[client-1] >' . Use '?' and enter to see available 
 ~~~
 build/client2 --dst=server-1 --libipc=./build/libipc.so --prompt='[client-2] > '
 ~~~
+
+## How build documentation
+~~~
+make doc
+~~~
