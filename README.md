@@ -7,11 +7,11 @@ The IPC is based on shared memory mapping and done by using:
 *   **Semaphores** (`sem_init`, `sem_wait`, `sem_post`, `sem_destroy`)
 *   **Memory mapped files** (`mmap`, `munmap`)
 
-### IPC Schema:
+#### IPC Schema:
 The client and server create their own SHM areas.
-### Server SHM:
+#### Server SHM:
 Used only to accept client connections.
-### Client SHM:
+#### Client SHM:
 The client creates a unique named (including PID) SHM area used for data transfer.
 This scheme helps avoid limitations on active client connections.
 
