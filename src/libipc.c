@@ -232,15 +232,16 @@ int ipc_connect(_ipc_t *client_cxt) {
 						sizeof(server_cxt->io_buffer));
 
 				/* send connection request */
-				sem_post(&(server_cxt->s_data));
-				ipc_sync();
+				if (sem_post(&(server_cxt->s_data)) == 0) {
+					ipc_sync();
 
-				/* Waiting for ready signal */
-				if (sem_wait(&(server_cxt->s_ready)) == 0) {
-					r = E_IPC_OK;
-					TRACE("libipc: Established connection to server '%s'\n", server_cxt->shm_name);
-				} else {
-					TRACE("libipc: Unable to connect '%s'\n", server_cxt->shm_name);
+					/* Waiting for ready signal */
+					if (sem_wait(&(server_cxt->s_ready)) == 0) {
+						r = E_IPC_OK;
+						TRACE("libipc: Established connection to server '%s'\n", server_cxt->shm_name);
+					} else {
+						TRACE("libipc: Unable to connect '%s'\n", server_cxt->shm_name);
+					}
 				}
 
 				munmap(server_cxt, sizeof(_ipc_t));
