@@ -117,6 +117,12 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	return r;
 }
 
+/* Sync FS (because it's not a realtime) */
+static void ipc_sync(void) {
+	fflush(NULL);
+	usleep(10);
+}
+
 /*
  * Close the IPC connection and clean up resources.
  *
@@ -133,6 +139,7 @@ void ipc_close(_ipc_t *cxt, int *pfd) {
 		sem_post(&(cxt->s_ready));
 		sem_destroy(&(cxt->s_ready));
 		shm_unlink(cxt->shm_name);
+		ipc_sync();
 #endif
 	}
 
@@ -177,10 +184,11 @@ _ipc_t *ipc_listen(_ipc_t *server_cxt, int *pfd) {
 				if (pfd) /* backup file descriptor */
 					*pfd = fd;
 
-				if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0)))
+				if ((r = mmap(NULL, sizeof(_ipc_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0))) {
 					/* Send ready signal */
 					sem_post(&(server_cxt->s_ready));
-				else {
+					ipc_sync();
+				} else {
 					TRACE("libipc: Unable to map client's shared area '%s'\n", server_cxt->io_buffer);
 				}
 			} else {
@@ -225,6 +233,7 @@ int ipc_connect(_ipc_t *client_cxt) {
 
 				/* send connection request */
 				sem_post(&(server_cxt->s_data));
+				ipc_sync();
 
 				/* Waiting for ready signal */
 				if (sem_wait(&(server_cxt->s_ready)) == 0) {
@@ -280,6 +289,9 @@ int ipc_write(_ipc_t *cxt, void *data, int size) {
 		if (sem_post(&(cxt->s_data)) == 0) {
 			r = n;
 
+			/* sync (ugly but needed) */
+			ipc_sync();
+
 			/* waiting for ready signal */
 			sem_wait(&(cxt->s_ready));
 		} else
@@ -318,6 +330,9 @@ int ipc_read(_ipc_t *cxt, void *buffer, int size) {
 
 			/* send ready signal */
 			sem_post(&(cxt->s_ready));
+
+			/* sync (ugly but needed) */
+			ipc_sync();
 		} else {
 			TRACE("libipc: Failed to read\n");
 			r = E_IPC_FAIL;
