@@ -1,12 +1,12 @@
-BUILD = build
-SRC = src
-INCLUDE = include
-DOC = docs
+BUILD = ./build
+SRC = ./src
+INCLUDE = ./include
+DOC = ./docs
 
 CC = gcc
 LD = ld
 
-CC_FLAGS = -Wall -Wextra -g -O3 -I./$(INCLUDE)/ -D_GNU_SOURCE
+CC_FLAGS = -Wall -Wextra -g -O3 -I$(INCLUDE)/ -D_GNU_SOURCE
 LD_FLAGS = -g -fPIC -shared
 
 TARGET_LIBIPC = $(BUILD)/libipc.so
@@ -29,7 +29,7 @@ CLIENT1_DEP = $(COMMON_DEPS) $(SRC)/argv.h $(SRC)/dtype.h
 CLIENT2_SRC = $(SRC)/client2.c $(SRC)/argv.c $(SRC)/trace.c
 CLIENT2_DEP = $(COMMON_DEPS) $(SRC)/argv.h $(SRC)/dtype.h
 
-all: $(BUILD) server client1 client2
+all: $(BUILD) libipc server client1 client2
 
 $(TARGET_CLIENT1): $(TARGET_LIBIPC) $(CLIENT1_SRC) $(CLIENT1_DEP)
 	$(CC) $(CC_FLAGS) $(CLIENT1_SRC) -L$(BUILD) -lipc -o $@
@@ -52,11 +52,12 @@ $(BUILD):
 $(DOC):
 	doxygen doxy.cfg
 
+libipc: $(TARGET_LIBIPC)
 server: $(TARGET_SERVER)
 client1: $(TARGET_CLIENT1)
 client2: $(TARGET_CLIENT2)
 doc:	$(DOC)
 clean:
-	rm -rf $(BUILD)
 	rm -rf $(DOC)
+	rm -rf $(BUILD)
 
