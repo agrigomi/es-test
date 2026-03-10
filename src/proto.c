@@ -46,23 +46,26 @@ static int is_number(const char *str) {
 	int r = INT_NUMBER;
 	int l = strlen(str);
 
-	for (;n < l; n++) {
-		if (str[n] == '.') {
-			if (!f)
-				f = 1;
-			else {
-				r = NOT_NUMBER;
-				f = 0;
-				break;
-			}
-		} else {
-			if (!isdigit(str[n])) {
-				r = NOT_NUMBER;
-				f = 0;
-				break;
+	if (l) {
+		for (;n < l; n++) {
+			if (str[n] == '.') {
+				if (!f)
+					f = 1;
+				else {
+					r = NOT_NUMBER;
+					f = 0;
+					break;
+				}
+			} else {
+				if (!isdigit(str[n])) {
+					r = NOT_NUMBER;
+					f = 0;
+					break;
+				}
 			}
 		}
-	}
+	} else
+		r = NOT_NUMBER;
 
 	if (f)
 		r = FLOAT_NUMBER;
