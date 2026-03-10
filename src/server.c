@@ -87,12 +87,9 @@ static void *io_thread(void *arg) {
 
 			memset(out, 0, sizeof(out));
 
-			// call protocol here
-			// ...
+			/* call protocol */
 			rsz = proto_exec(inp, out, sizeof(out));
 			memset(inp, 0, sizeof(inp));
-			/* time to sync ~!@ */
-			usleep(10000);
 
 			/* send response */
 			ipc_write(ud->ipc_cxt, out, rsz);
@@ -127,11 +124,9 @@ static int do_fork(_ipc_t *ipc_cxt, int fd) {
 
 			memset(out, 0, sizeof(out));
 
-			// call protocol here
+			/* call protocol */
 			rsz = proto_exec(inp, out, sizeof(out));
 			memset(inp, 0, sizeof(inp));
-			/* time to sync (ugly)*/
-			usleep(10000);
 
 			/* send response */
 			ipc_write(ipc_cxt, out, rsz);
