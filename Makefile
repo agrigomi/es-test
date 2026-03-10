@@ -6,7 +6,7 @@ DOC = docs
 CC = gcc
 LD = ld
 
-CC_FLAGS = -Wall -Wextra -g -O0 -I./$(INCLUDE)/ -D_GNU_SOURCE
+CC_FLAGS = -Wall -Wextra -g -O3 -I./$(INCLUDE)/ -D_GNU_SOURCE
 LD_FLAGS = -g -fPIC -shared
 
 TARGET_LIBIPC = $(BUILD)/libipc.so
