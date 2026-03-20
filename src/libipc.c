@@ -88,7 +88,6 @@ _ipc_t *ipc_server(const char *ifc, int mode, int *pfd) {
 _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 	_ipc_t *r = NULL;
 	char ifc[MAX_SHM_NAME];
-	int sz = 0;
 	static int counter = 0;
 
 	memset(ifc, 0, sizeof(ifc));
@@ -98,13 +97,13 @@ _ipc_t *ipc_client(const char *dst, int mode, int *pfd) {
 #if USE_SHARED_MEMORY
 			/* Create uniqie name for client shared memory */
 			counter++;
-			sz = snprintf(ifc, sizeof(ifc), "c%dp%d", counter, getpid());
+			snprintf(ifc, sizeof(ifc), "c%dp%d", counter, getpid());
 
 			/* Open client side shared area for data transfer */
 			if ((r = open_shared_memory(ifc, pfd))) {
 				/* Set destination (server SHM) in own IO buffer */
 				strncpy((char *)r->io_buffer, dst, sizeof(r->io_buffer) - 1);
-				r->size = sz;
+				r->size = strlen(dst);
 			}
 #endif
 			break;
